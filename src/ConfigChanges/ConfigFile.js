@@ -56,6 +56,7 @@ function ConfigFile (project_dir, platform, file_tag) {
 // ConfigFile.load()
 ConfigFile.prototype.load = ConfigFile_load;
 function ConfigFile_load () {
+
     var self = this;
 
     // config file may be in a place not exactly specified in the target
@@ -190,7 +191,7 @@ function resolveConfigFilePath (project_dir, platform, file) {
         if (platform === 'ubuntu') {
             filepath = path.join(project_dir, 'config.xml');
         } else if (platform === 'ios') {
-            var iospath = getIOSProjectname(project_dir);
+            var iospath = module.exports.getIOSProjectname(project_dir);
             filepath = path.join(project_dir, iospath, 'config.xml');
         } else if (platform === 'android') {
             filepath = path.join(project_dir, 'res', 'xml', 'config.xml');
@@ -240,3 +241,6 @@ function isBinaryPlist (filename) {
 }
 
 module.exports = ConfigFile;
+module.exports.isBinaryPlist = isBinaryPlist;
+module.exports.getIOSProjectname = getIOSProjectname;
+module.exports.resolveConfigFilePath = resolveConfigFilePath;
