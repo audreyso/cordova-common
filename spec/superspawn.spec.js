@@ -19,6 +19,7 @@
 
 var Q = require('q');
 var superspawn = require('../src/superspawn');
+var fs = require('fs');
 
 var LS = process.platform === 'win32' ? 'dir' : 'ls';
 
@@ -88,4 +89,27 @@ describe('spawn method', function () {
             });
     });
 
+    it('maybeSpawn happy path', function (done) {
+        spyOn(fs, 'existsSync').and.returnValue(true);
+        spyOn(superspawn, 'spawn');
+        superspawn.maybeSpawn('cmd');
+        expect(fs.existsSync).toHaveBeenCalledWith('cmd');
+        done();
+    });
+
+    it('maybeSpawn returns null', function (done) {
+        spyOn(superspawn, 'spawn');
+        superspawn.maybeSpawn();
+        expect(superspawn.spawn).not.toHaveBeenCalled();
+        done();
+    });
+
+    it('opts.chmod correct params', function (done) {
+        spyOn(fs, 'chmodSync').and.returnValue(true);
+        superspawn.spawn(LS, [], {chmod: 'env'})
+            .fin(function () {
+                expect(fs.chmodSync).toHaveBeenCalledWith('ls', '755');
+                done();
+            });
+    });
 });
