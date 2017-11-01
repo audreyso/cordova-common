@@ -181,6 +181,24 @@ function add_config_changes (config, should_increment) {
         var config_files_changes = config.getConfigFiles(self.platform);
         if (config_files_changes) {
             changes = changes.concat(config_files_changes);
+            if((config_files_changes[0]) && (config_files_changes[0]['mode']) && (config_files_changes[0]['mode'] === 'remove')) {
+                function remove_config_changes (config) {
+                    // var platform_config = self.platformJson.root;
+
+                    // get config munge, aka how did this plugin change various config files
+                    config_munge = self.generate_config_xml_munge(config, changes, 'config.xml');
+                    // global munge looks at all plugins' changes to config files
+                    var global_munge = platform_config.config_munge;
+                    var munge = mungeutil.decrement_munge(global_munge, config_munge);
+
+                    for (var file in munge.files) {
+                        self.apply_file_munge(file, munge.files[file], /* remove = */ true);
+                    }
+
+                    return self;
+                }
+                remove_config_changes(config); 
+            }
         }
     }
 
@@ -277,7 +295,7 @@ function generate_config_xml_munge (config, config_changes, type) {
             // 1. stringify each xml
             var stringified = (new et.ElementTree(xml)).write({xml_declaration: false});
             // 2. add into munge
-            if (change.mode) {
+            if (change.mode !== 'remove') {
                 mungeutil.deep_add(munge, change.file, change.target, { xml: stringified, count: 1, mode: change.mode, id: id });
             } else {
                 mungeutil.deep_add(munge, change.target, change.parent, { xml: stringified, count: 1, after: change.after });
