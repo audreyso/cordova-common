@@ -567,6 +567,7 @@ ConfigParser.prototype = {
         return config_files.map(function (tag) {
             var configFile =
                 {
+                    mode: tag.attrib['mode'] || 'add',
                     target: tag.attrib['target'],
                     parent: tag.attrib['parent'],
                     after: tag.attrib['after'],
