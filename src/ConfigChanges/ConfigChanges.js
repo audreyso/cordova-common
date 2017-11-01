@@ -181,27 +181,21 @@ function add_config_changes (config, should_increment) {
         var config_files_changes = config.getConfigFiles(self.platform);
         if (config_files_changes) {
             changes = changes.concat(config_files_changes);
-            if((config_files_changes[0]) && (config_files_changes[0]['mode']) && (config_files_changes[0]['mode'] === 'remove')) {
-                function remove_config_changes (config) {
-                    // var platform_config = self.platformJson.root;
 
-                    // get config munge, aka how did this plugin change various config files
-                    config_munge = self.generate_config_xml_munge(config, changes, 'config.xml');
-                    // global munge looks at all plugins' changes to config files
-                    var global_munge = platform_config.config_munge;
-                    var munge = mungeutil.decrement_munge(global_munge, config_munge);
-
-                    for (var file in munge.files) {
-                        self.apply_file_munge(file, munge.files[file], /* remove = */ true);
-                    }
-
-                    return self;
-                }
-                remove_config_changes(config); 
-            }
+            // Handle instances when mode is set to remove
+            // config_files_changes.forEach( function (eachObj) {
+            //     for (var key in eachObj) {
+            //         if (eachObj.hasOwnProperty(key)){
+            //             if(key === 'mode' && eachObj[key] === 'remove') {
+            //                 changes = changes.concat(config_files_changes);
+            //                 // should_increment = false;
+            //                 // config_munge = mungeutil.decrement_munge(config_munge, changes);
+            //             }
+            //         }
+            //     }
+            // });
         }
     }
-
     if (changes && changes.length > 0) {
         var isConflictingInfo = is_conflicting(changes, platform_config.config_munge, self, true /* always force overwrite other edit-config */);
         if (isConflictingInfo.conflictFound) {
@@ -226,11 +220,9 @@ function add_config_changes (config, should_increment) {
             }
         }
     }
-
     // Add config.xml edit-config and config-file munges
     config_munge = self.generate_config_xml_munge(config, changes, 'config.xml');
     self = munge_helper(should_increment, self, platform_config, config_munge);
-
     // Move to installed/dependent_plugins
     return self;
 }
@@ -249,6 +241,12 @@ function munge_helper (should_increment, self, platform_config, config_munge) {
         global_munge = mungeutil.clone_munge(platform_config.config_munge);
         munge = config_munge;
     }
+
+    // try this
+    // if (should_increment === false) {
+    //     console.log('in decrement munge & should_increment is false');
+    //     munge = mungeutil.decrement_munge(global_munge, config_munge);
+    // }
 
     for (var file in munge.files) {
         self.apply_file_munge(file, munge.files[file]);
@@ -295,8 +293,10 @@ function generate_config_xml_munge (config, config_changes, type) {
             // 1. stringify each xml
             var stringified = (new et.ElementTree(xml)).write({xml_declaration: false});
             // 2. add into munge
-            if (change.mode !== 'remove') {
+            if (change.mode && change.mode !== 'remove') {
                 mungeutil.deep_add(munge, change.file, change.target, { xml: stringified, count: 1, mode: change.mode, id: id });
+            } else if (change.mode && change.mode === 'remove') {
+                mungeutil.deep_remove(munge, change.file, change.target, { xml: stringified, count: 0, mode: change.mode, id: id });
             } else {
                 mungeutil.deep_add(munge, change.target, change.parent, { xml: stringified, count: 1, after: change.after });
             }
